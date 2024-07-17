@@ -20,30 +20,6 @@ const db = mysql.createConnection({
     insecureAuth: true
 })
 
-app.get('/info', (req, res) => {
-    const show = `select * from faculty;`;
-    db.query(show, (err, data) => {
-        if (err) {
-            // return res.send("error");
-            console.log(err.message);
-        }
-        else {
-            console.log(data);
-        }
-    })
-})
-
-app.listen(4000, () => {
-    console.log("server started at port 4000");
-    db.connect((err) => {
-        if (err) {
-            console.log(err.message);
-        } else {
-            console.log("Connected!");
-        }
-    })
-})
-
 let tp = nm.createTransport({
     host: process.env.SMTP_HOST,
     port: 587,
@@ -54,23 +30,34 @@ let tp = nm.createTransport({
     },
 });
 
-app.get('/verifycredential', (req, res) => {
+app.post('/verifycredential', (req, res) => {
     const { email, password } = req.body;
-    const sql = `select * from faculty where fpassword=${password}`
-    let responsedata;
-    db.query(sql, (err, data) => {
-        if (err) {
-            console.log(err.message);
-        }
-        else {
-            res.send(data);
-        }
-    })
+    const sql = `select femail,fpassword from faculty where fpassword=${password} AND femail='${email}' `
+    const sql2 = `select femail,fpassword from faculty  `
+
+    try {
+        db.query(sql, (err, data) => {
+            if (err) {
+                // console.log(err.message);
+            }
+            else if (data.length != 0) {
+                for (let i = 0; i < data.length; i++) {
+                    if (email == data[i].femail && password == data[i].fpassword) {
+                        console.log(data[i].fpassword);
+                        res.json({ msg: "success" });
+                    }
+                }
+            } else {
+                res.json({ status: "failed" })
+            }
+        })
+    } catch (error) {
+        console.log(error);
+    }
 })
 
 app.post('/sendmail', (req, res) => {
-    const { email, otp, password } = req.body;
-    console.log(password);
+    const { email, otp } = req.body;
     let mailOptions = {
         from: process.env.SMTP_MAIL,
         to: email,
@@ -87,6 +74,13 @@ app.post('/sendmail', (req, res) => {
     })
 })
 
-app.listen(process.env.PORT, () => {
-    console.log("server started at port 8000");
+app.listen(4000, () => {
+    console.log("server started at port 4000");
+    db.connect((err) => {
+        if (err) {
+            console.log(err.message);
+        } else {
+            console.log("Connected!");
+        }
+    })
 })
