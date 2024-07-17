@@ -33,27 +33,27 @@ let tp = nm.createTransport({
 app.post('/verifycredential', (req, res) => {
     const { email, password } = req.body;
     const sql = `select femail,fpassword from faculty where fpassword=${password} AND femail='${email}' `
-    const sql2 = `select femail,fpassword from faculty  `
 
     try {
         db.query(sql, (err, data) => {
             if (err) {
-                // console.log(err.message);
+                console.log(err);
             }
             else if (data.length != 0) {
                 for (let i = 0; i < data.length; i++) {
                     if (email == data[i].femail && password == data[i].fpassword) {
-                        console.log(data[i].fpassword);
+                        // console.log(data[i].fpassword);
                         res.json({ msg: "success" });
                     }
                 }
             } else {
-                res.json({ status: "failed" })
+                // console.log("data=" + data);
+                res.json({ msg: "failed" })
             }
         })
     } catch (error) {
         console.log(error);
-    }
+    };
 })
 
 app.post('/sendmail', (req, res) => {
@@ -70,6 +70,22 @@ app.post('/sendmail', (req, res) => {
             console.log("Email Did not sent ", error);
         } else {
             console.log("Email Sent");
+        }
+    })
+})
+
+app.post('/checkforfirsttime',(req,res)=>{
+    const {email,password}= req.body;
+    let query = `select * from faculty where femail ='${email}' AND fpassword=${password}`;
+    db.query(query,(error,data)=>{
+        if(error){
+            console.log(error);
+        }else{
+            if(data[0].fdept==null|| data[0].fjoindate==null || data[0].fphoneno==null){
+                    res.json({msg : "newuser"})
+            }else{
+                res.json({msg:"olduser"})
+            }
         }
     })
 })
