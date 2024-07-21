@@ -31,23 +31,22 @@ let tp = nm.createTransport({
 });
 
 app.post('/verifycredential', (req, res) => {
-    const { email, password } = req.body;
-    const sql = `select femail,fpassword from faculty where fpassword=${password} AND femail='${email}' `
-
+    let { email, password, admin } = req.body;
+    const sql = `select femail,fpassword,fadminpermission from faculty where fpassword=${password} AND femail='${email}' AND fadminpermission=${admin} `
+    // console.log(admin);
     try {
         db.query(sql, (err, data) => {
             if (err) {
                 console.log(err);
             }
             else if (data.length != 0) {
+                // console.log(data[0].fadminpermission);
                 for (let i = 0; i < data.length; i++) {
-                    if (email == data[i].femail && password == data[i].fpassword) {
-                        // console.log(data[i].fpassword);
+                    if (email == data[i].femail && password == data[i].fpassword && admin == data[i].fadminpermission) {
                         res.json({ msg: "success" });
                     }
                 }
             } else {
-                // console.log("data=" + data);
                 res.json({ msg: "failed" })
             }
         })
@@ -71,21 +70,47 @@ app.post('/sendmail', (req, res) => {
         } else {
             console.log("Email Sent");
         }
+    });
+});
+
+app.post('/checkforfirsttime', (req, res) => {
+    const { email, password } = req.body;
+    let query = `select * from faculty where femail ='${email}' AND fpassword=${password}`;
+    db.query(query, (error, data) => {
+        if (error) {
+            console.log(error);
+        } else {
+            if (data[0].fdept == null || data[0].fjoindate == null || data[0].fphoneno == null || data[0].profileimage == null) {
+                res.json({ fid: data[0].fid, msg: "newuser" })
+            } else {
+                res.json({ fid: data[0].fid, msg: "olduser" })
+            }
+        }
+    })
+});
+
+app.post('/fetchuserdetails', (req, res) => {
+    const {fid} = req.body;
+    let query = `select * from faculty where fid =${fid}`;
+    console.log(fid);
+    db.query(query, (error, data) => {
+        if (error) {
+            console.log(error);
+        } else {
+            res.json({name:data[0].fname});
+        }
     })
 })
 
-app.post('/checkforfirsttime',(req,res)=>{
-    const {email,password}= req.body;
-    let query = `select * from faculty where femail ='${email}' AND fpassword=${password}`;
-    db.query(query,(error,data)=>{
-        if(error){
+app.post('/insertuserdetails', (req, res) => {
+    const {id,department,date,photo,phone} = req.body;
+    console.log("insert details function");
+    let query = `update faculty set fdept="${department}", fjoindate = ${date},fphoneno =${phone},profileimage='${photo}' where fid=${id}`;
+    db.query(query, (error, data) => {
+        if (error) {
             console.log(error);
-        }else{
-            if(data[0].fdept==null|| data[0].fjoindate==null || data[0].fphoneno==null){
-                    res.json({msg : "newuser"})
-            }else{
-                res.json({msg:"olduser"})
-            }
+        } else {
+            res.json({msg:"success"});
         }
     })
 })
@@ -98,5 +123,5 @@ app.listen(4000, () => {
         } else {
             console.log("Connected!");
         }
-    })
-})
+    });
+});
