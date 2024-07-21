@@ -115,6 +115,10 @@ app.post('/insertuserdetails', (req, res) => {
     })
 })
 
+app.get('/', (req, res) => {
+    res.send("heyy");
+})
+
 app.listen(4000, () => {
     console.log("server started at port 4000");
     db.connect((err) => {
